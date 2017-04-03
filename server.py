@@ -58,9 +58,15 @@ class SecondaryServerSocket(asynchat.async_chat):
         self.callback = callback
         print 'initializing secondary server socket'
         asynchat.async_chat.__init__(self, *args)
+        self.terminator = '\n'
+        self.received_data = []
         
     def collect_incoming_data(self, data):
-        self.callback(data)
+        self.received_data.append(data)
+        
+    def found_terminator(self):
+        self.callback("".join(self.received_data))
+        self.received_data = []
         
     def handle_close(self):
         print "Disconnected from", self.getpeername()
