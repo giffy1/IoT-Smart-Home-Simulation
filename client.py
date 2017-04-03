@@ -21,8 +21,21 @@ def receive_message(socket, callback = None):
         try:
             message = socket.recv(1024)
             if message:
-                if callback:
-                    callback(json.loads(message))
+                if '}{' in message:
+                    messages = message.split('}{')
+                    for i,m in enumerate(messages):
+                        if i == 0:
+                            m = m + '}'
+                        elif i == len(messages) - 1:
+                            m = '{' + m
+                        else:
+                            m = '{' + m + '}'
+                        if callback:
+                            threading.Thread(target=callback, args=(json.loads(m),)).start()
+                else:
+                    if callback:
+                        threading.Thread(target=callback, args=(json.loads(message),)).start()
+                        
         except Exception as err:
             if err.message == "timed out":
                 pass
@@ -37,7 +50,7 @@ def send_message(socket, queue_lock, message_queue):
         queue_lock.acquire()
         if not message_queue.empty():
             message = message_queue.get()
-            socket.send(json.dumps(message))
+            socket.send(message)
         queue_lock.release()
 
 class Client():
@@ -69,10 +82,9 @@ class Client():
         
         Messages are by convention in JSON format.
         """
-        
         self.queue_lock.acquire()
 #        time.sleep(self.delay)
-        self.message_queue.put(message)
+        self.message_queue.put(json.dumps(message) + "\n")
         self.queue_lock.release()
         
     def on_message_received(self, message):
