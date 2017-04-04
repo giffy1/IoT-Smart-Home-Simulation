@@ -49,8 +49,8 @@ class MainServerSocket(asyncore.dispatcher):
         uuid : the unique ID identifying the client.
         message : the message being sent to the client.
         """
-        print message, uuid
-        print "sending..."
+#        print message, uuid
+#        print "sending..."
         self.clients[uuid].push(message)
 
 class SecondaryServerSocket(asynchat.async_chat):
