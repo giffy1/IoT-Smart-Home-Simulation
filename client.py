@@ -17,9 +17,10 @@ def receive_message(socket, callback = None):
     Receives messages through the given socket and upon receiving messages, 
     passes them to the given callback, if provided.
     """
+    last_message = ''
     while not exit_flag:
         try:
-            message = socket.recv(1024)
+            message = last_message + socket.recv(1024)
             if message:
                 if '}{' in message:
                     messages = message.split('}{')
@@ -35,12 +36,15 @@ def receive_message(socket, callback = None):
                 else:
                     if callback:
                         threading.Thread(target=callback, args=(json.loads(message),)).start()
+            last_message = ''
                         
         except Exception as err:
             if err.message == "timed out":
                 pass
             else:
-                print err
+#                print err
+#                print message
+                last_message = message
     
 def send_message(socket, queue_lock, message_queue):
     """
@@ -66,7 +70,6 @@ class Client():
         """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect(self.address)
-        print "Connected to server"
         
         threading.Thread(target=receive_message, args=(self.socket, self.on_message_received)).start()
         threading.Thread(target=send_message, args=(self.socket, self.queue_lock, self.message_queue)).start() 
